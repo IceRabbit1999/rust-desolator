@@ -18,9 +18,15 @@ async fn main() -> Result<()>{
         info!("Client {:?} connected", addr);
         tokio::spawn(async move {
             let mut stream = AsyncProstStream::<_, CommandRequest, CommandResponse, _>::from(stream).for_async();
-
-        })
+            while let Some(Ok(msg)) = stream.next().await {
+                info!("Got a new command: {:?}", msg);
+                let mut resp = CommandResponse::default();
+                resp.status = 404;
+                resp.message = "Not Found".to_string();
+                stream.send(resp).await.unwrap();
+            }
+            info!("Client {:?} disconnected", addr);
+        });
     }
 
-    Ok(())
 }
